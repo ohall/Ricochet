@@ -1,0 +1,13 @@
+node_modules
+dist
+app/bower_components
+
+.tmp
+.sass-cache
+.travis.yml
+.bowerrc
+.jshintrc
+.editorconfig
+.gitattributes
+.idea
+.travis.yml
