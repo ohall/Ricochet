@@ -2,7 +2,6 @@
   "name": "ricochet",
   "version": "0.0.0",
   "dependencies": {
-    "karma": "~0.12.21",
     "grunt-karma": "~0.8.3"
   },
   "devDependencies": {
