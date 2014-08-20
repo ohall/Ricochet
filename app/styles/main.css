@@ -4,6 +4,10 @@ body {
     color: #333;
 }
 
+canvas{
+    background-color: greenyellow;
+}
+
 .hero-unit {
     margin: 50px auto 0 auto;
     width: 300px;
