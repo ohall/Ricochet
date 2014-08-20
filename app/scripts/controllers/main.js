@@ -18,8 +18,8 @@ angular.module('RicochetApp')
                 x:$scope.canvas.width/2,
                 y:getBallatEdgeCoord(BALL_RADIUS,$scope.canvas.height)-5,
                 radius:BALL_RADIUS,
-                vx:30,
-                vy:30,
+                vx:300,
+                vy:300,
                 dx:10,
                 dy:10,
                 context:$scope.context
@@ -43,14 +43,18 @@ angular.module('RicochetApp')
             }
         };
 
-        $scope.play = function(){
+        $scope.play = function(event){
+            aimAtTarget($scope.ball.x,$scope.ball.y,event.offsetX,event.offsetY);
             if(!$scope.running){
-                $scope.updates = $interval(update, UPDATE_INTERVAL);
-                $scope.running = true;
+                $scope.start();
             }else{
-                $interval.cancel( $scope.updates );
-                $scope.running = false;
+                $scope.stop();
             }
+        };
+
+        var aimAtTarget = function(ball,targetx,targety){
+            $scope.ball.target = {x:targetx,y:targety};
+            $scope.ball.targeted = true;
         };
 
         var clearCanvas = function(ctx) {
@@ -64,6 +68,7 @@ angular.module('RicochetApp')
             if($scope.ball){
                 $scope.ball.drawit();
                 var contact = wallContact($scope.ball,$scope.canvas );
+
                 if( contact.left || contact.right ){
                     $scope.ball.vx *= -bounceFactor;
                     $scope.ball.dx=-$scope.ball.dx;
@@ -73,9 +78,54 @@ angular.module('RicochetApp')
                     $scope.ball.vy *= -bounceFactor;
                     $scope.ball.dy=-$scope.ball.dy;
                 }
-                $scope.ball.x+=$scope.ball.dx;
-                $scope.ball.y-=$scope.ball.dy;
+
+                if($scope.ball.targeted){
+
+                    if( isWithinRange($scope.ball.y, $scope.ball.target.y, $scope.ball.dy) &&
+                        isWithinRange($scope.ball.x, $scope.ball.target.x, $scope.ball.dx) ){
+                        $scope.ball.targeted = false;
+                    }else{
+
+                        if( $scope.ball.x > $scope.ball.target.x){
+                            $scope.ball.x-=$scope.ball.dx;
+                        }
+
+                        if( $scope.ball.y > $scope.ball.target.y){
+                            $scope.ball.y-=$scope.ball.dy;
+                        }
+
+
+                        if( $scope.ball.x < $scope.ball.target.x){
+                            $scope.ball.x+=$scope.ball.dx;
+                        }
+
+                        if( $scope.ball.y < $scope.ball.target.y){
+                            $scope.ball.y+=$scope.ball.dy;
+                        }
+
+                    }
+
+
+                }else{
+                    $scope.ball.x+=$scope.ball.dx;
+                    $scope.ball.y-=$scope.ball.dy;
+                }
+
             }
+        };
+
+        var isWithinRange = function(aval,bval,range){
+            return( Math.abs(aval - bval) <= range );
+        };
+
+        $scope.stop = function(){
+            $interval.cancel( $scope.updates );
+            $scope.running = false;
+        };
+
+        $scope.start = function(){
+            $scope.updates = $interval(update, UPDATE_INTERVAL);
+            $scope.running = true;
         };
 
         /**
@@ -123,6 +173,8 @@ angular.module('RicochetApp')
             this.dy = attrs.dy;
             this.context = attrs.context;
             this.draw = $scope.drawFunc;
+            this.target = {x:0,y:0};
+            this.targeted = false;
             this.drawit = function(){
                 this.draw(this.context);
             };
