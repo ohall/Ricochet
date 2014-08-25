@@ -6,6 +6,8 @@ angular.module('RicochetApp')
             UPDATE_INTERVAL = 1000/60,
             bounceFactor = 0.1;
 
+        $scope.dx = 10;
+        $scope.dy = 10;
 
         $scope.init = function(){
             $scope.canvas = document.getElementById( 'gameCanvas' );
@@ -16,7 +18,8 @@ angular.module('RicochetApp')
                 color:'blue',
                 name:'hero',
                 x:$scope.canvas.width/2,
-                y:getBallatEdgeCoord(BALL_RADIUS,$scope.canvas.height)-5,
+                y:$scope.canvas.height/2,
+//                y:getBallatEdgeCoord(BALL_RADIUS,$scope.canvas.height)-5,
                 radius:BALL_RADIUS,
                 vx:300,
                 vy:300,
@@ -44,8 +47,8 @@ angular.module('RicochetApp')
         };
 
         $scope.play = function(event){
-            aimAtTarget($scope.ball.x,$scope.ball.y,event.offsetX,event.offsetY);
             if(!$scope.running){
+                aimAtTarget($scope.ball,event.offsetX,event.offsetY);
                 $scope.start();
             }else{
                 $scope.stop();
@@ -53,8 +56,21 @@ angular.module('RicochetApp')
         };
 
         var aimAtTarget = function(ball,targetx,targety){
-            $scope.ball.target = {x:targetx,y:targety};
-            $scope.ball.targeted = true;
+            ball.target = {x:targetx,y:targety};
+            ball.targeted = true;
+            var dir = getDirection( (targetx - ball.x),
+                                    (targety - ball.y)*-1);
+            ball.dx = dir.y;
+            ball.dy = dir.x;
+            function getDirection (xdiff,ydiff){
+                function getValFromDiff(diff){
+                    return diff*.1;
+                }
+                var direction = {};
+                direction.x = getValFromDiff(ydiff);
+                direction.y = getValFromDiff(xdiff);
+                return direction;
+            };
         };
 
         var clearCanvas = function(ctx) {
@@ -79,37 +95,41 @@ angular.module('RicochetApp')
                     $scope.ball.dy=-$scope.ball.dy;
                 }
 
-                if($scope.ball.targeted){
-
-                    if( isWithinRange($scope.ball.y, $scope.ball.target.y, $scope.ball.dy) &&
-                        isWithinRange($scope.ball.x, $scope.ball.target.x, $scope.ball.dx) ){
-                        $scope.ball.targeted = false;
-                    }else{
-
-                        if( $scope.ball.x > $scope.ball.target.x){
-                            $scope.ball.x-=$scope.ball.dx;
-                        }
-
-                        if( $scope.ball.y > $scope.ball.target.y){
-                            $scope.ball.y-=$scope.ball.dy;
-                        }
+                $scope.ball.x+=$scope.ball.dx;
+                $scope.ball.y-=$scope.ball.dy;
 
 
-                        if( $scope.ball.x < $scope.ball.target.x){
-                            $scope.ball.x+=$scope.ball.dx;
-                        }
-
-                        if( $scope.ball.y < $scope.ball.target.y){
-                            $scope.ball.y+=$scope.ball.dy;
-                        }
-
-                    }
-
-
-                }else{
-                    $scope.ball.x+=$scope.ball.dx;
-                    $scope.ball.y-=$scope.ball.dy;
-                }
+//                if($scope.ball.targeted){
+//
+//                    if( isWithinRange($scope.ball.y, $scope.ball.target.y, $scope.ball.dy) &&
+//                        isWithinRange($scope.ball.x, $scope.ball.target.x, $scope.ball.dx) ){
+//                        $scope.ball.targeted = false;
+//                    }else{
+//
+//                        if( $scope.ball.x > $scope.ball.target.x){
+//                            $scope.ball.x-=$scope.ball.dx;
+//                        }
+//
+//                        if( $scope.ball.y > $scope.ball.target.y){
+//                            $scope.ball.y-=$scope.ball.dy;
+//                        }
+//
+//
+//                        if( $scope.ball.x < $scope.ball.target.x){
+//                            $scope.ball.x+=$scope.ball.dx;
+//                        }
+//
+//                        if( $scope.ball.y < $scope.ball.target.y){
+//                            $scope.ball.y+=$scope.ball.dy;
+//                        }
+//
+//                    }
+//
+//
+//                }else{
+//                    $scope.ball.x+=$scope.ball.dx;
+//                    $scope.ball.y-=$scope.ball.dy;
+//                }
 
             }
         };
