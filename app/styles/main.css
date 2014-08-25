@@ -4,8 +4,12 @@ body {
     color: #333;
 }
 
-canvas{
-    background-color: greenyellow;
+.game-canvas{
+    background-color: yellow;
+}
+
+.win-canvas{
+    background-color: green;
 }
 
 .hero-unit {

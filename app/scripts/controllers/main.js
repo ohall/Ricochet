@@ -6,10 +6,14 @@ angular.module('RicochetApp')
             UPDATE_INTERVAL = 1000/60,
             bounceFactor = 0.1;
 
+
         $scope.init = function(){
             $scope.canvas = document.getElementById( 'gameCanvas' );
             $scope.canvas.width =  350;
             $scope.canvas.height = 700;
+            $scope.gamemode = 'game';
+            $scope.running = false;
+
             $scope.context = $scope.canvas.getContext('2d');
             var attrs = {
                 color:'blue',
@@ -51,17 +55,21 @@ angular.module('RicochetApp')
         };
 
         $scope.up = function(event){
-            $scope.line = null;
-            if(!$scope.running){
+            if(!$scope.running) {
+                $scope.line = null;
                 aimAtTarget($scope.ball,event.offsetX,event.offsetY);
                 $scope.start();
-            }else{
-                $scope.stop();
             }
         };
 
         $scope.win = function(){
+            $scope.stop();
+            $scope.gamemode = 'win';
+            $interval( $scope.reset, 2000, 1);
+        };
 
+        $scope.reset = function(){
+            $scope.init();
         };
 
         var aimAtTarget = function(ball,targetx,targety){
@@ -78,11 +86,17 @@ angular.module('RicochetApp')
             clearCanvas($scope.context);
             if($scope.ball){
                 var contact = wallContact($scope.ball,$scope.canvas );
+
+                if(contact.top){
+                    $scope.win();
+                    return;
+                }
+
                 if( contact.left || contact.right ){
                     $scope.ball.vx *= -bounceFactor;
                     $scope.ball.dx=-$scope.ball.dx;
                 }
-                if( contact.top || contact.bottom ){
+                if( contact.bottom ){
                     $scope.ball.vy *= -bounceFactor;
                     $scope.ball.dy=-$scope.ball.dy;
                 }
