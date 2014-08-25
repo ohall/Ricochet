@@ -41,13 +41,27 @@ angular.module('RicochetApp')
             }
         };
 
-        $scope.play = function(event){
+        $scope.down = function(event){
+            if(!$scope.running) {
+                $scope.context.beginPath();
+                $scope.context.moveTo($scope.ball.x, $scope.ball.y);
+                $scope.context.lineTo(event.offsetX, event.offsetY);
+                $scope.line = $scope.context.stroke();
+            }
+        };
+
+        $scope.up = function(event){
+            $scope.line = null;
             if(!$scope.running){
                 aimAtTarget($scope.ball,event.offsetX,event.offsetY);
                 $scope.start();
             }else{
                 $scope.stop();
             }
+        };
+
+        $scope.win = function(){
+
         };
 
         var aimAtTarget = function(ball,targetx,targety){
@@ -63,7 +77,6 @@ angular.module('RicochetApp')
         var update = function() {
             clearCanvas($scope.context);
             if($scope.ball){
-                $scope.ball.drawit();
                 var contact = wallContact($scope.ball,$scope.canvas );
                 if( contact.left || contact.right ){
                     $scope.ball.vx *= -bounceFactor;
@@ -75,6 +88,7 @@ angular.module('RicochetApp')
                 }
                 $scope.ball.x+=$scope.ball.dx;
                 $scope.ball.y-=$scope.ball.dy;
+                $scope.ball.drawit();
             }
         };
 
