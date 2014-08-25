@@ -6,9 +6,6 @@ angular.module('RicochetApp')
             UPDATE_INTERVAL = 1000/60,
             bounceFactor = 0.1;
 
-        $scope.dx = 10;
-        $scope.dy = 10;
-
         $scope.init = function(){
             $scope.canvas = document.getElementById( 'gameCanvas' );
             $scope.canvas.width =  350;
@@ -19,7 +16,6 @@ angular.module('RicochetApp')
                 name:'hero',
                 x:$scope.canvas.width/2,
                 y:$scope.canvas.height/2,
-//                y:getBallatEdgeCoord(BALL_RADIUS,$scope.canvas.height)-5,
                 radius:BALL_RADIUS,
                 vx:300,
                 vy:300,
@@ -35,7 +31,6 @@ angular.module('RicochetApp')
                 // Here, we'll first begin drawing the path and then use the arc() function to draw the circle. The arc function accepts 6 parameters, x position, y position, radius, start angle, end angle and a boolean for anti-clockwise direction.
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2, false);
-
                 //createRadialGradient(x0, y0, r0, x1, y1, r1);
                 var radialGradient = ctx.createRadialGradient(this.x+2, this.y+2, BALL_RADIUS, this.x+2, this.y+2, 1);
                 radialGradient.addColorStop(1,'#fff' );
@@ -57,26 +52,12 @@ angular.module('RicochetApp')
 
         var aimAtTarget = function(ball,targetx,targety){
             ball.target = {x:targetx,y:targety};
-            ball.targeted = true;
-            var dir = getDirection( (targetx - ball.x),
-                                    (targety - ball.y)*-1);
-            ball.dx = dir.y;
-            ball.dy = dir.x;
-            function getDirection (xdiff,ydiff){
-                function getValFromDiff(diff){
-                    return diff*.1;
-                }
-                var direction = {};
-                direction.x = getValFromDiff(ydiff);
-                direction.y = getValFromDiff(xdiff);
-                return direction;
-            };
+            ball.dx = (targetx - ball.x)*( bounceFactor);
+            ball.dy = (targety - ball.y)*(-bounceFactor);
         };
 
         var clearCanvas = function(ctx) {
-            if(ctx){
-                ctx.clearRect(0, 0, $scope.canvas.width, $scope.canvas.height);
-            }
+            if(ctx){ ctx.clearRect(0, 0, $scope.canvas.width, $scope.canvas.height); }
         };
 
         var update = function() {
@@ -84,58 +65,17 @@ angular.module('RicochetApp')
             if($scope.ball){
                 $scope.ball.drawit();
                 var contact = wallContact($scope.ball,$scope.canvas );
-
                 if( contact.left || contact.right ){
                     $scope.ball.vx *= -bounceFactor;
                     $scope.ball.dx=-$scope.ball.dx;
                 }
-
                 if( contact.top || contact.bottom ){
                     $scope.ball.vy *= -bounceFactor;
                     $scope.ball.dy=-$scope.ball.dy;
                 }
-
                 $scope.ball.x+=$scope.ball.dx;
                 $scope.ball.y-=$scope.ball.dy;
-
-
-//                if($scope.ball.targeted){
-//
-//                    if( isWithinRange($scope.ball.y, $scope.ball.target.y, $scope.ball.dy) &&
-//                        isWithinRange($scope.ball.x, $scope.ball.target.x, $scope.ball.dx) ){
-//                        $scope.ball.targeted = false;
-//                    }else{
-//
-//                        if( $scope.ball.x > $scope.ball.target.x){
-//                            $scope.ball.x-=$scope.ball.dx;
-//                        }
-//
-//                        if( $scope.ball.y > $scope.ball.target.y){
-//                            $scope.ball.y-=$scope.ball.dy;
-//                        }
-//
-//
-//                        if( $scope.ball.x < $scope.ball.target.x){
-//                            $scope.ball.x+=$scope.ball.dx;
-//                        }
-//
-//                        if( $scope.ball.y < $scope.ball.target.y){
-//                            $scope.ball.y+=$scope.ball.dy;
-//                        }
-//
-//                    }
-//
-//
-//                }else{
-//                    $scope.ball.x+=$scope.ball.dx;
-//                    $scope.ball.y-=$scope.ball.dy;
-//                }
-
             }
-        };
-
-        var isWithinRange = function(aval,bval,range){
-            return( Math.abs(aval - bval) <= range );
         };
 
         $scope.stop = function(){
@@ -194,12 +134,10 @@ angular.module('RicochetApp')
             this.context = attrs.context;
             this.draw = $scope.drawFunc;
             this.target = {x:0,y:0};
-            this.targeted = false;
             this.drawit = function(){
                 this.draw(this.context);
             };
             this.drawit();
         };
-
         $scope.init();
 });
