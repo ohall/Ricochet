@@ -65,7 +65,7 @@ angular.module('RicochetApp')
         $scope.win = function(){
             $scope.stop();
             $scope.gamemode = 'win';
-            $interval( $scope.reset, 2000, 1);
+            $interval( $scope.reset, 1000, 1);
         };
 
         $scope.reset = function(){
