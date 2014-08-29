@@ -8,6 +8,8 @@
 
 
             $scope.init = function () {
+                $scope.tris = [];
+                $scope.rects = [];
                 $scope.canvas = document.getElementById('gameCanvas');
                 $scope.canvas.width = 350;
                 $scope.canvas.height = 700;
@@ -15,28 +17,22 @@
                 $scope.running = false;
 
                 $scope.context = $scope.canvas.getContext('2d');
-                var attrs = {
+                var ballAttrs = {
                     color: 'blue',
                     name: 'hero',
                     x: $scope.canvas.width / 2,
                     y: $scope.canvas.height / 2,
                     radius: BALL_RADIUS,
-                    vx: 300,
-                    vy: 300,
-                    dx: 10,
-                    dy: 10,
+                    vx: 30,
+                    vy: 30,
+                    dx: 1,
+                    dy: 1,
                     context: $scope.context
                 };
-                $scope.ball = new Ball(attrs);
+                $scope.ball = new Ball(ballAttrs);
 
-                var triattrs = {
-                    vert1: [100, 75],
-                    vert2: [100, 25],
-                    vert3: [75, 50]
-                };
-
-                _.forEach(LevelService.triangles(),function(atr){
-                    $scope.tri = new Tri(atr);
+                _.forEach(LevelService.rectangles(),function(atr){
+                    $scope.rects.push( new Rect(atr) );
                 });
             };
 
@@ -83,7 +79,7 @@
             var update = function () {
                 clearCanvas($scope.context);
                 if ($scope.ball) {
-                    var contact = collision($scope.ball, $scope.canvas, $scope.tri);
+                    var contact = collision($scope.ball, $scope.canvas, $scope.rects);
 
                     if (contact.exit) {
                         $scope.win();
@@ -98,13 +94,15 @@
                         $scope.ball.vy *= -bounceFactor;
                         $scope.ball.dy = -$scope.ball.dy;
                     }
-                    $scope.ball.x += $scope.ball.dx;
-                    $scope.ball.y -= $scope.ball.dy;
+                    $scope.ball.x += Math.round($scope.ball.dx);
+                    $scope.ball.y -= Math.round($scope.ball.dy);
                     $scope.ball.drawit();
                 }
 
-                if ($scope.tri) {
-                    $scope.tri.drawit();
+                if ($scope.rects.length > 0) {
+                    _.each($scope.rects,function(rect){
+                        rect.drawit();
+                    });
                 }
 
             };
@@ -126,7 +124,7 @@
                 return( edgeLoc === 0 ) ? ballRadius : (edgeLoc - ballRadius);
             };
 
-            var collision = function (ball, canvas, tri) {
+            var collision = function (ball, canvas, obstacles) {
                 var contact = {
                     top: false,
                     right: false,
@@ -147,15 +145,37 @@
                     contact.right = true;
                 }
 
-                if(ball.y <= tri.ymax && ball.x <= tri.xmax && ball.x >= tri.xmin ) {
-                    contact.bottom = true;
-                }else if(ball.y >= tri.ymin && ball.x <= tri.xmax && ball.x >= tri.xmin ){
-                    contact.top = true;
-                }else if(ball.x <= tri.xmax && ball.y <= tri.ymax && ball.y >= tri.ymin ){
-                    contact.right = true;
-                }else if(ball.x >= tri.xmin && ball.y <= tri.ymax && ball.y >= tri.ymin ){
-                    contact.left = true;
-                }
+                _.each(obstacles,function(ob){
+                    if ( ball.y >= ob.ymax && ball.y <= ob.ymin && ball.x <= ob.xmax && ball.x >= ob.xmin ) {
+
+                        //get balls distace from edge of obstacle
+                        var closest = canvas.height*canvas.width,
+                            left    = Math.abs(ball.x - ob.xmin),
+                            right   = Math.abs(ball.x - ob.xmax),
+                            top     = Math.abs(ball.y - ob.ymax),
+                            bottom  = Math.abs(ball.y - ob.ymin);
+
+
+                            var distances = [left,right,top,bottom];
+
+                        //find which one is closest
+                        _.each(distances,function(side){
+                           if(side<closest){
+                               closest = side;
+                           }
+                        });
+
+                        //set the closest one as true
+                        switch(closest){
+                            case left:   contact.left    = true; break;
+                            case right:  contact.right   = true; break;
+                            case top:    contact.top     = true; break;
+                            case bottom: contact.bottom  = true; break;
+                            default:     contact.bottom  = true;
+                        }
+                        return false;
+                    }
+                });
                 return contact;
             };
 
@@ -190,23 +210,45 @@
                 this.drawit(this.context);
             };
 
-            var Tri = function(attrs){
-                this.context = $scope.context;
-                this.vert1   = attrs.vert1;
-                this.vert2   = attrs.vert2;
-                this.vert3   = attrs.vert3;
+//            var Tri = function(attrs){
+//                this.context = $scope.context;
+//                this.vert1   = attrs.vert1;
+//                this.vert2   = attrs.vert2;
+//                this.vert3   = attrs.vert3;
+//                this.drawit  = function() {
+//                    this.context.beginPath();
+//                    this.context.moveTo(this.vert1[0],this.vert1[1]);
+//                    this.context.lineTo(this.vert2[0],this.vert2[1]);
+//                    this.context.lineTo(this.vert3[0],this.vert3[1]);
+//                    this.context.fill();
+//                };
+//                this.init = function(){
+//                    this.xmax = _.max( [ this.vert1[0], this.vert2[0], this.vert3[0] ] );
+//                    this.xmin = _.min( [ this.vert1[0], this.vert2[0], this.vert3[0] ] );
+//                    this.ymax = _.max( [ this.vert1[1], this.vert2[1], this.vert3[1] ] );
+//                    this.ymin = _.min( [ this.vert1[1], this.vert2[1], this.vert3[1] ] );
+//                    this.drawit();
+//                };
+//                this.init();
+//            };
+
+            var Rect = function(attrs){
+                this.context    = $scope.context;
+                this.x          = attrs.x;
+                this.y          = attrs.y;
+                this.width      = attrs.width;
+                this.height     = attrs.height;
                 this.drawit  = function() {
                     this.context.beginPath();
-                    this.context.moveTo(this.vert1[0],this.vert1[1]);
-                    this.context.lineTo(this.vert2[0],this.vert2[1]);
-                    this.context.lineTo(this.vert3[0],this.vert3[1]);
+                    this.context.rect(this.x,this.y,this.width,this.height);
+                    this.context.stroke();
                     this.context.fill();
                 };
                 this.init = function(){
-                    this.xmax = _.max( [ this.vert1[0], this.vert2[0], this.vert3[0] ] );
-                    this.xmin = _.min( [ this.vert1[0], this.vert2[0], this.vert3[0] ] );
-                    this.ymax = _.max( [ this.vert1[1], this.vert2[1], this.vert3[1] ] );
-                    this.ymin = _.min( [ this.vert1[1], this.vert2[1], this.vert3[1] ] );
+                    this.xmax = this.x + this.width;
+                    this.xmin = this.x;
+                    this.ymax = this.y;
+                    this.ymin = this.y + this.width;
                     this.drawit();
                 };
                 this.init();
